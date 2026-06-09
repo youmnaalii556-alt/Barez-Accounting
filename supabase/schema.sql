@@ -1,6 +1,6 @@
 -- ============================================================
---  Barez ERP — Supabase Schema
---  Run this entire file in: Supabase Dashboard → SQL Editor
+--  Barez ERP - Supabase Schema
+--  Run this entire file in: Supabase Dashboard -> SQL Editor
 -- ============================================================
 
 -- 1. Profiles (extends auth.users)
@@ -89,17 +89,19 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================================
 
 INSERT INTO public.modules (name, name_ar, slug, icon, description_ar, order_index, allowed_roles) VALUES
-  ('HR',         'الموارد البشرية', 'hr',         'users',       'إدارة الموظفين، الرواتب، والإجازات',       1, ARRAY['super_admin','manager','employee']),
-  ('Finance',    'المالية',         'finance',    'dollar-sign', 'الميزانية، المصروفات، والتقارير المالية', 2, ARRAY['super_admin','manager']),
-  ('Projects',   'المشاريع',       'projects',   'briefcase',   'إدارة العقارات، المركبات، والمشاريع',     3, ARRAY['super_admin','manager']),
-  ('Accounting', 'الحسابات',       'accounting', 'book-open',   'القيود اليومية، ميزان المراجعة، IFRS',    4, ARRAY['super_admin','manager']),
-  ('Admin',      'الإدارة',        'admin/modules','settings',  'إدارة وحدات النظام والصلاحيات',           99, ARRAY['super_admin'])
+  ('HR',         'الموارد البشرية', 'hr',           'users',       'ادارة الموظفين والرواتب والاجازات',        1,  ARRAY['super_admin','manager','employee']),
+  ('Finance',    'المالية',         'finance',      'dollar-sign', 'الميزانية والمصروفات والتقارير المالية',   2,  ARRAY['super_admin','manager']),
+  ('Projects',   'المشاريع',        'projects',     'briefcase',   'ادارة العقارات والمركبات والمشاريع',       3,  ARRAY['super_admin','manager']),
+  ('Accounting', 'الحسابات',        'accounting',   'book-open',   'القيود اليومية وميزان المراجعة و IFRS',   4,  ARRAY['super_admin','manager']),
+  ('Admin',      'الادارة',         'admin/modules','settings',    'ادارة وحدات النظام والصلاحيات',            99, ARRAY['super_admin'])
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================================
--- IMPORTANT: After running this SQL, create your first user in
--- Supabase Auth → Users, then update their role:
+-- After running this SQL:
+-- 1. Go to Supabase Auth -> Users and create your first user
+-- 2. Then run this to make them Super Admin (replace the UUID):
 --
---   UPDATE public.profiles SET role = 'super_admin', full_name_ar = 'اسمك'
---   WHERE id = '<user-uuid>';
+--   UPDATE public.profiles
+--   SET role = 'super_admin', full_name_ar = 'put your name here'
+--   WHERE id = '<paste-user-uuid-here>';
 -- ============================================================
