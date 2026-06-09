@@ -2,43 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import {
-  Users, DollarSign, Briefcase, BookOpen, Settings,
-  LayoutDashboard, BarChart3, FileText, Calendar,
-  Building2, Truck, Home, LogOut, Shield, ChevronLeft,
-  type LucideIcon,
-} from 'lucide-react'
+import { LayoutDashboard, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getIcon, getGradient } from '@/lib/icons'
 import type { Module, Profile } from '@/types'
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  'users':            Users,
-  'dollar-sign':      DollarSign,
-  'briefcase':        Briefcase,
-  'book-open':        BookOpen,
-  'settings':         Settings,
-  'layout-dashboard': LayoutDashboard,
-  'bar-chart':        BarChart3,
-  'file-text':        FileText,
-  'calendar':         Calendar,
-  'building':         Building2,
-  'truck':            Truck,
-  'home':             Home,
-  'shield':           Shield,
-}
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: 'مدير النظام',
   manager:     'مدير قسم',
   employee:    'موظف',
-}
-
-const MODULE_COLORS: Record<string, string> = {
-  hr:         '#3b82f6',
-  finance:    '#22c55e',
-  projects:   '#8b5cf6',
-  accounting: '#f59e0b',
-  admin:      '#64748b',
 }
 
 interface SidebarProps {
@@ -58,8 +30,8 @@ export default function Sidebar({ modules, profile }: SidebarProps) {
   }
 
   const navItems = [
-    { slug: 'dashboard', name_ar: 'الرئيسية', icon: 'layout-dashboard', href: '/dashboard' },
-    ...modules.map(m => ({ ...m, href: `/${m.slug}` })),
+    { slug: 'dashboard', name_ar: 'الرئيسية', icon: 'layout-dashboard', href: '/dashboard', index: -1 },
+    ...modules.map((m, i) => ({ ...m, href: `/${m.slug}`, index: i })),
   ]
 
   return (
@@ -69,7 +41,7 @@ export default function Sidebar({ modules, profile }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow"
-          style={{ background: 'linear-gradient(135deg, #c5a028, #e2b93b)' }}>
+          style={{ background: 'linear-gradient(135deg,#c5a028,#e2b93b)' }}>
           <span className="text-white font-bold text-xl">B</span>
         </div>
         <div>
@@ -81,19 +53,19 @@ export default function Sidebar({ modules, profile }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
         {navItems.map(item => {
-          const Icon     = ICON_MAP[item.icon] ?? LayoutDashboard
+          const Icon     = item.slug === 'dashboard' ? LayoutDashboard : getIcon(item.icon)
           const isActive = item.slug === 'dashboard'
             ? pathname === '/dashboard'
             : pathname.startsWith(`/${item.slug}`)
-          const color = MODULE_COLORS[item.slug] ?? '#94a3b8'
+          const gradient = getGradient(item.slug, item.index)
 
           return (
             <Link key={item.slug} href={item.href}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
                          group relative overflow-hidden"
               style={{
-                background: isActive ? 'rgba(197,160,40,0.15)' : 'transparent',
-                color:      isActive ? '#e2b93b' : '#cbd5e1',
+                background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                color:      isActive ? '#fff' : '#94a3b8',
               }}>
 
               {isActive && (
@@ -101,27 +73,25 @@ export default function Sidebar({ modules, profile }: SidebarProps) {
                   style={{ background: '#c5a028' }} />
               )}
 
+              {/* Colored icon tile */}
               <span className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
-                style={{
-                  background: isActive ? `${color}25` : 'rgba(255,255,255,0.05)',
-                  color:      isActive ? color : '#94a3b8',
-                }}>
-                <Icon className="w-4 h-4" />
+                style={{ background: isActive ? gradient : 'rgba(255,255,255,0.06)' }}>
+                <Icon className="w-4 h-4"
+                  style={{ color: isActive ? '#fff' : '#64748b' }} />
               </span>
 
-              <span className="group-hover:text-white" style={{ color: isActive ? '#e2b93b' : undefined }}>
-                {item.name_ar}
-              </span>
+              <span className="group-hover:text-white">{item.name_ar}</span>
             </Link>
           )
         })}
       </nav>
 
-      {/* User info + Logout */}
+      {/* User + Logout */}
       <div className="border-t border-white/10 p-4 space-y-3">
         <div className="flex items-center gap-3 px-1">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-white"
-            style={{ background: 'linear-gradient(135deg, #1b3a6b, #2a5298)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
+                          font-bold text-white text-sm"
+            style={{ background: 'linear-gradient(135deg,#1b3a6b,#2a5298)' }}>
             {(profile?.full_name_ar ?? profile?.full_name ?? '؟')[0]}
           </div>
           <div className="min-w-0">

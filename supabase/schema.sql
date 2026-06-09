@@ -40,21 +40,17 @@ CREATE TABLE IF NOT EXISTS public.modules (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.modules   ENABLE ROW LEVEL SECURITY;
 
--- Profiles: users can read their own profile
 CREATE POLICY "users_read_own_profile" ON public.profiles
   FOR SELECT USING (auth.uid() = id);
 
--- Profiles: super_admin can read/write all profiles
 CREATE POLICY "superadmin_all_profiles" ON public.profiles
   FOR ALL USING (
     EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'super_admin')
   );
 
--- Modules: any authenticated user can read active modules
 CREATE POLICY "authenticated_read_modules" ON public.modules
   FOR SELECT USING (auth.role() = 'authenticated');
 
--- Modules: only super_admin can write modules
 CREATE POLICY "superadmin_write_modules" ON public.modules
   FOR ALL USING (
     EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'super_admin')
@@ -89,11 +85,13 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================================
 
 INSERT INTO public.modules (name, name_ar, slug, icon, description_ar, order_index, allowed_roles) VALUES
-  ('HR',         'الموارد البشرية', 'hr',           'users',       'ادارة الموظفين والرواتب والاجازات',        1,  ARRAY['super_admin','manager','employee']),
-  ('Finance',    'المالية',         'finance',      'dollar-sign', 'الميزانية والمصروفات والتقارير المالية',   2,  ARRAY['super_admin','manager']),
-  ('Projects',   'المشاريع',        'projects',     'briefcase',   'ادارة العقارات والمركبات والمشاريع',       3,  ARRAY['super_admin','manager']),
-  ('Accounting', 'الحسابات',        'accounting',   'book-open',   'القيود اليومية وميزان المراجعة و IFRS',   4,  ARRAY['super_admin','manager']),
-  ('Admin',      'الادارة',         'admin/modules','settings',    'ادارة وحدات النظام والصلاحيات',            99, ARRAY['super_admin'])
+  ('HR',              'الموارد البشرية',  'hr',               'users',          'ادارة الموظفين والرواتب والاجازات',       1,  ARRAY['super_admin','manager','employee']),
+  ('Self Service',    'الخدمة الذاتية',   'self-service',     'user-cog',       'بياناتك الشخصية وطلباتك واجازاتك',       2,  ARRAY['super_admin','manager','employee']),
+  ('Accounting',      'الحسابات',         'accounting',       'book-open',      'القيود اليومية وميزان المراجعة و IFRS',  3,  ARRAY['super_admin','manager']),
+  ('Customer Service','خدمة العملاء',     'customer-service', 'headphones',     'ادارة التذاكر والشكاوى وطلبات العملاء',  4,  ARRAY['super_admin','manager']),
+  ('Projects',        'المشاريع',         'projects',         'briefcase',      'ادارة العقارات والمركبات والمشاريع',      5,  ARRAY['super_admin','manager']),
+  ('Finance',         'المالية',          'finance',          'dollar-sign',    'الميزانية والمصروفات والتقارير المالية',  6,  ARRAY['super_admin','manager']),
+  ('Admin',           'الاعدادات',        'admin/modules',    'settings',       'ادارة وحدات النظام والصلاحيات',           99, ARRAY['super_admin'])
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================================
