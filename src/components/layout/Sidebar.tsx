@@ -1,8 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, LogOut, ChevronLeft } from 'lucide-react'
+import {
+  LayoutDashboard, LogOut, ChevronDown, ChevronLeft,
+  ClipboardList, Scale, FileText, BarChart3, List, Settings,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getIcon, getGradient } from '@/lib/icons'
 import type { Module, Profile } from '@/types'
@@ -13,47 +17,29 @@ const ROLE_LABELS: Record<string, string> = {
   employee:    'موظف',
 }
 
-const S = {
-  sidebar: {
-    position: 'fixed' as const, top: 0, right: 0, height: '100vh', width: '260px',
-    background: '#0f2744', display: 'flex', flexDirection: 'column' as const,
-    zIndex: 50, boxShadow: '-4px 0 24px rgba(0,0,0,0.25)',
-  },
-  logoArea: {
-    height: '64px', display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '0 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0,
-  },
-  logoIcon: {
-    width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
-    background: 'linear-gradient(135deg,#c5a028,#e2b93b)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(197,160,40,0.4)',
-  },
-  nav: { flex: 1, overflowY: 'auto' as const, padding: '12px 10px' },
-  sectionLabel: {
-    fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.25)',
-    letterSpacing: '0.1em', textTransform: 'uppercase' as const,
-    padding: '12px 12px 6px',
-  },
-  userArea: {
-    padding: '12px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0,
-  },
-  userCard: {
-    display: 'flex', alignItems: 'center', gap: '10px',
-    padding: '10px 12px', borderRadius: '12px',
-    background: 'rgba(255,255,255,0.05)',
-  },
-  avatar: {
-    width: '34px', height: '34px', borderRadius: '10px', flexShrink: 0,
-    background: 'linear-gradient(135deg,#1b3a6b,#2a5298)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    color: '#fff', fontSize: '13px', fontWeight: 700,
-  },
+const SUB_NAV: Record<string, { label: string; href: string; icon: React.ElementType }[]> = {
+  accounting: [
+    { label: 'القيود اليومية',   href: '/accounting/journal',           icon: ClipboardList },
+    { label: 'دليل الحسابات',   href: '/accounting/chart-of-accounts', icon: List          },
+    { label: 'ميزان المراجعة',  href: '/accounting/trial-balance',     icon: Scale         },
+    { label: 'القوائم المالية', href: '/accounting/statements',        icon: FileText      },
+    { label: 'تقارير الحسابات', href: '/accounting/reports',           icon: BarChart3     },
+  ],
 }
 
-export default function Sidebar({ modules, profile }: { modules: Module[]; profile: Profile | null }) {
+interface SidebarProps {
+  modules: Module[]
+  profile: Profile | null
+}
+
+export default function Sidebar({ modules, profile }: SidebarProps) {
   const pathname = usePathname()
   const router   = useRouter()
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {}
+    Object.keys(SUB_NAV).forEach(slug => { init[slug] = pathname.startsWith(`/${slug}`) })
+    return init
+  })
 
   async function handleLogout() {
     const supabase = createClient()
@@ -67,102 +53,153 @@ export default function Sidebar({ modules, profile }: { modules: Module[]; profi
     ...modules.map((m, i) => ({ ...m, href: `/${m.slug}`, index: i })),
   ]
 
-  const mainItems  = navItems.filter(i => i.slug !== 'admin' && i.slug !== 'admin/modules')
-  const adminItems = navItems.filter(i => i.slug === 'admin' || i.slug === 'admin/modules')
-
-  function NavItem({ item }: { item: typeof navItems[0] }) {
-    const Icon     = item.slug === 'dashboard' ? LayoutDashboard : getIcon(item.icon)
-    const isActive = item.slug === 'dashboard'
-      ? pathname === '/dashboard'
-      : pathname.startsWith(`/${item.slug}`)
-
-    return (
-      <Link href={item.href} style={{
-        display: 'flex', alignItems: 'center', gap: '10px',
-        padding: '9px 12px', borderRadius: '10px', marginBottom: '2px',
-        background: isActive ? 'rgba(197,160,40,0.12)' : 'transparent',
-        color: isActive ? '#e2b93b' : 'rgba(255,255,255,0.5)',
-        textDecoration: 'none', position: 'relative', transition: 'all 0.15s',
-      }}
-      onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#fff' }}
-      onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)' } }}>
-
-        {isActive && (
-          <div style={{
-            position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-            width: '3px', height: '20px', borderRadius: '2px 0 0 2px',
-            background: '#c5a028',
-          }} />
-        )}
-
-        {/* Icon tile */}
-        <div style={{
-          width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: isActive ? getGradient(item.slug, item.index) : 'rgba(255,255,255,0.06)',
-          transition: 'all 0.15s',
-        }}>
-          <Icon size={15} color={isActive ? '#fff' : 'rgba(255,255,255,0.4)'} />
-        </div>
-
-        <span style={{ fontSize: '13.5px', fontWeight: isActive ? 600 : 400, flex: 1 }}>
-          {item.name_ar}
-        </span>
-
-        {isActive && <ChevronLeft size={14} style={{ opacity: 0.6 }} />}
-      </Link>
-    )
-  }
-
   return (
-    <aside style={S.sidebar}>
+    <aside className="fixed top-0 right-0 h-screen w-64 flex flex-col z-50"
+      style={{
+        background: 'linear-gradient(180deg,#0a1e3d 0%,#0f2744 50%,#0a1e3d 100%)',
+        boxShadow: '0 0 40px rgba(0,0,0,.4)',
+        borderLeft: '1px solid rgba(255,255,255,.05)',
+      }}>
 
       {/* Logo */}
-      <div style={S.logoArea}>
-        <div style={S.logoIcon}>
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: '18px' }}>B</span>
+      <div className="flex items-center gap-3 px-5 py-5 flex-shrink-0"
+        style={{ borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#c5a028,#e2b93b)' }}>
+          <span className="text-white font-black text-xl">B</span>
         </div>
         <div>
-          <p style={{ color: '#fff', fontWeight: 700, fontSize: '15px', lineHeight: 1.2 }}>Barez ERP</p>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>Enterprise Edition</p>
+          <p className="font-black text-white text-base leading-none">Barez ERP</p>
+          <p className="text-xs mt-0.5" style={{ color: '#7a9cc8' }}>إدارة الموارد المؤسسية</p>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav style={S.nav}>
-        <div style={S.sectionLabel}>القائمة الرئيسية</div>
-        {mainItems.map(item => <NavItem key={item.slug} item={item} />)}
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2.5 sidebar-scroll space-y-0.5">
+        {navItems.map((item) => {
+          const subs    = SUB_NAV[item.slug] ?? []
+          const hasSubs = subs.length > 0
+          const isOpen  = expanded[item.slug] ?? false
+          const Icon    = item.slug === 'dashboard' ? LayoutDashboard : getIcon(item.icon)
+          const gradient = getGradient(item.slug, item.index)
+          const isActive = item.slug === 'dashboard'
+            ? pathname === '/dashboard'
+            : pathname.startsWith(`/${item.slug}`)
 
-        {adminItems.length > 0 && (
+          if (hasSubs) {
+            return (
+              <div key={item.slug}>
+                <button onClick={() => setExpanded(p => ({ ...p, [item.slug]: !p[item.slug] }))}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium relative"
+                  style={{
+                    background: isActive ? 'rgba(255,255,255,.09)' : 'transparent',
+                    color: isActive ? '#fff' : '#8eabd0',
+                  }}>
+                  {isActive && (
+                    <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full"
+                      style={{ background: '#c5a028' }} />
+                  )}
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
+                    style={{ background: isActive ? gradient : 'rgba(255,255,255,.06)' }}>
+                    <Icon className="w-4 h-4" style={{ color: isActive ? '#fff' : '#4d7ab5' }} />
+                  </span>
+                  <span className="flex-1 text-right">{item.name_ar}</span>
+                  {isOpen
+                    ? <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                    : <ChevronLeft className="w-3.5 h-3.5 opacity-60" />}
+                </button>
+
+                {isOpen && (
+                  <div className="mr-5 mt-0.5 mb-1 space-y-0.5">
+                    {subs.map(sub => {
+                      const subActive = pathname === sub.href || pathname.startsWith(sub.href + '/')
+                      return (
+                        <Link key={sub.href} href={sub.href}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium"
+                          style={{
+                            background: subActive ? 'rgba(197,160,40,.12)' : 'transparent',
+                            color: subActive ? '#e2b93b' : '#7a9cc8',
+                            borderRight: subActive ? '2px solid #c5a028' : '2px solid transparent',
+                          }}>
+                          <sub.icon className="w-3.5 h-3.5 flex-shrink-0"
+                            style={{ color: subActive ? '#c5a028' : '#4d7ab5' }} />
+                          {sub.label}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          return (
+            <Link key={item.slug} href={item.href}
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium relative"
+              style={{
+                background: isActive ? 'rgba(255,255,255,.09)' : 'transparent',
+                color: isActive ? '#fff' : '#8eabd0',
+              }}>
+              {isActive && (
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full"
+                  style={{ background: '#c5a028' }} />
+              )}
+              <span className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
+                style={{ background: isActive ? gradient : 'rgba(255,255,255,.06)' }}>
+                <Icon className="w-4 h-4" style={{ color: isActive ? '#fff' : '#4d7ab5' }} />
+              </span>
+              <span>{item.name_ar}</span>
+            </Link>
+          )
+        })}
+
+        <div className="mx-2 my-3 h-px" style={{ background: 'rgba(255,255,255,.07)' }} />
+
+        {profile?.role === 'super_admin' && (
           <>
-            <div style={{ ...S.sectionLabel, marginTop: '8px' }}>الإدارة</div>
-            {adminItems.map(item => <NavItem key={item.slug} item={item} />)}
+            <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
+              style={{ color: '#4d6a8a' }}>إدارة النظام</p>
+            <Link href="/admin/modules"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium relative"
+              style={{
+                background: pathname.startsWith('/admin') ? 'rgba(255,255,255,.09)' : 'transparent',
+                color: pathname.startsWith('/admin') ? '#fff' : '#8eabd0',
+              }}>
+              {pathname.startsWith('/admin') && (
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full"
+                  style={{ background: '#c5a028' }} />
+              )}
+              <span className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
+                style={{ background: pathname.startsWith('/admin') ? 'linear-gradient(135deg,#1e293b,#475569)' : 'rgba(255,255,255,.06)' }}>
+                <Settings className="w-4 h-4"
+                  style={{ color: pathname.startsWith('/admin') ? '#fff' : '#4d7ab5' }} />
+              </span>
+              <span>إدارة الوحدات</span>
+            </Link>
           </>
         )}
       </nav>
 
-      {/* User + Logout */}
-      <div style={S.userArea}>
-        <div style={S.userCard}>
-          <div style={S.avatar}>
+      {/* User footer */}
+      <div className="flex-shrink-0 p-3" style={{ borderTop: '1px solid rgba(255,255,255,.07)' }}>
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl"
+          style={{ background: 'rgba(255,255,255,.05)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg,#c5a028,#e2b93b)' }}>
             {(profile?.full_name_ar ?? profile?.full_name ?? '؟')[0]}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600,
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div className="min-w-0 flex-1">
+            <p className="text-white text-sm font-semibold truncate leading-tight">
               {profile?.full_name_ar ?? profile?.full_name ?? 'مستخدم'}
             </p>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '11px' }}>
+            <p className="text-xs" style={{ color: '#7a9cc8' }}>
               {ROLE_LABELS[profile?.role ?? 'employee']}
             </p>
           </div>
-          <button onClick={handleLogout} title="تسجيل الخروج" style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-            color: 'rgba(255,100,100,0.6)', borderRadius: '6px', transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#f87171'; (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,100,100,0.6)'; (e.currentTarget as HTMLElement).style.background = 'none' }}>
-            <LogOut size={15} />
+          <button onClick={handleLogout}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-red-400
+                       hover:text-red-300 hover:bg-red-500/10 transition-colors flex-shrink-0">
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>

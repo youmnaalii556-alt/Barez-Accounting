@@ -1,61 +1,70 @@
-export type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
-export type NormalBalance = 'debit' | 'credit'
+// Types aligned to supabase/schema.sql (accounts / journal_entries / journal_lines / projects)
 
-export interface AccProject {
-  id: string
-  name: string
-  activity: string | null
-  currency: string
-  fiscal_year: string
-  registration: string | null
-  notes: string | null
-  is_active: boolean
-  created_at: string
-}
+export type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
+export type Nature = 'debit' | 'credit'
+export type JournalStatus = 'draft' | 'posted' | 'void'
 
 export interface Account {
   id: string
   code: string
   name: string
+  name_ar: string
   type: AccountType
-  standard: string | null
-  category: string | null
-  normal_balance: NormalBalance
+  nature: Nature
+  parent_id: string | null
+  level: number
   is_active: boolean
+  notes: string | null
   created_at: string
 }
 
 export interface JournalLine {
   id: string
-  journal_id: string
-  account_code: string
-  description: string | null
+  entry_id: string
+  account_id: string
   debit: number
   credit: number
-  payment_method: string | null
+  description: string | null
   line_order: number
 }
 
 export interface Journal {
   id: string
-  ref: string
+  entry_no: string
   entry_date: string
-  project_id: string | null
   description: string
-  doc_ref: string | null
-  posted: boolean
+  reference: string | null
+  project_id: string | null
+  status: JournalStatus
+  posted_by: string | null
+  posted_at: string | null
   created_by: string | null
   created_at: string
   lines?: JournalLine[]
 }
 
+export interface Project {
+  id: string
+  project_no: string
+  name: string
+  name_ar: string
+  type: 'real_estate' | 'vehicle' | 'construction' | 'other'
+  status: 'planning' | 'active' | 'paused' | 'completed' | 'cancelled'
+  budget: number
+  spent: number
+  start_date: string | null
+  end_date: string | null
+  description: string | null
+  manager_id: string | null
+  created_at: string
+}
+
 /** Draft line used in the new-journal-entry form (before persistence). */
 export interface DraftLine {
-  account_code: string
+  account_id: string
   description: string
   debit: string
   credit: string
-  payment_method: string
 }
 
 export const ACCOUNT_TYPES_AR: Record<AccountType, string> = {
@@ -65,10 +74,3 @@ export const ACCOUNT_TYPES_AR: Record<AccountType, string> = {
   revenue:   'إيراد',
   expense:   'مصروف',
 }
-
-export const IFRS_STANDARDS = [
-  'IAS 1', 'IAS 7', 'IAS 16', 'IAS 19',
-  'IFRS 9', 'IFRS 15', 'IFRS 16', 'IFRS 40',
-] as const
-
-export const PAYMENT_METHODS = ['نقدي', 'تحويل بنكي', 'Booking', 'آجل'] as const

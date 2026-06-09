@@ -2,23 +2,142 @@
 
 @theme inline {
   --font-sans: var(--font-cairo), 'Cairo', sans-serif;
+
+  /* ── Brand ── */
+  --color-primary:       #1b3a6b;
+  --color-primary-dark:  #0f2744;
+  --color-primary-light: #2a5298;
+  --color-accent:        #c5a028;
+  --color-accent-light:  #e2b93b;
+
+  /* ── Semantic ── */
+  --color-success:       #16a34a;
+  --color-warning:       #d97706;
+  --color-danger:        #dc2626;
+  --color-info:          #2563eb;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html { direction: rtl; scroll-behavior: smooth; }
 html, body { height: 100%; }
 
 body {
   font-family: var(--font-cairo), 'Cairo', sans-serif;
-  background: #F5F7FA;
-  color: #181C32;
+  background: #f0f2f5;
+  color: #0f172a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+::-webkit-scrollbar             { width: 5px; height: 5px; }
+::-webkit-scrollbar-track       { background: transparent; }
+::-webkit-scrollbar-thumb       { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.sidebar-scroll::-webkit-scrollbar       { width: 3px; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius:10px; }
 
 input, button, select, textarea { font-family: inherit; }
+
+/* ══════ ERP TABLE (SAP-style) ══════ */
+.erp-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.875rem; }
+.erp-table thead th {
+  background:#f8fafc; color:#64748b;
+  font-size:.70rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+  padding:9px 14px; border-bottom:2px solid #e2e8f0; white-space:nowrap;
+  position:sticky; top:0; z-index:1;
+}
+.erp-table tbody td   { padding:11px 14px; border-bottom:1px solid #f1f5f9; color:#1e293b; vertical-align:middle; }
+.erp-table tbody tr:hover td { background:#f8fafc; }
+.erp-table tbody tr:last-child td { border-bottom:none; }
+.erp-table tfoot td   { padding:10px 14px; background:#f8fafc; border-top:2px solid #e2e8f0; font-weight:700; }
+
+.col-num     { font-variant-numeric:tabular-nums; direction:ltr; text-align:left; }
+.text-credit { color:#16a34a !important; }
+.text-debit  { color:#dc2626 !important; }
+
+/* ══════ BADGES ══════ */
+.badge         { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:9999px; font-size:.72rem; font-weight:600; white-space:nowrap; }
+.badge-success { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+.badge-warning { background:#fffbeb; color:#d97706; border:1px solid #fde68a; }
+.badge-danger  { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+.badge-info    { background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; }
+.badge-gray    { background:#f8fafc; color:#475569; border:1px solid #e2e8f0; }
+.badge-amber   { background:#fffbeb; color:#92400e; border:1px solid #fde68a; }
+
+/* ══════ CARDS ══════ */
+.erp-card        { background:#fff; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+.erp-card-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #f1f5f9; }
+.erp-card-body   { padding:20px; }
+
+/* ══════ KPI STAT CARD ══════ */
+.stat-card { background:#fff; border-radius:12px; border:1px solid #e2e8f0; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.06); position:relative; overflow:hidden; }
+.stat-card::after { content:''; position:absolute; top:0; right:0; width:4px; height:100%; border-radius:0 12px 12px 0; }
+.stat-card.blue::after   { background:#3b82f6; }
+.stat-card.green::after  { background:#22c55e; }
+.stat-card.amber::after  { background:#f59e0b; }
+.stat-card.purple::after { background:#8b5cf6; }
+.stat-card.red::after    { background:#ef4444; }
+.stat-card.teal::after   { background:#14b8a6; }
+.stat-card.navy::after   { background:#1b3a6b; }
+
+/* ══════ BUTTONS ══════ */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:8px; font-size:.8125rem; font-weight:600; font-family:inherit; cursor:pointer; border:none; transition:all 150ms; white-space:nowrap; }
+.btn:disabled            { opacity:.55; cursor:not-allowed; }
+.btn:active:not(:disabled) { transform:scale(.97); }
+
+.btn-primary { background:linear-gradient(135deg,#1b3a6b,#2a5298); color:#fff; box-shadow:0 1px 3px rgba(27,58,107,.3); }
+.btn-primary:hover:not(:disabled) { box-shadow:0 4px 12px rgba(27,58,107,.35); }
+
+.btn-success { background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; }
+.btn-success:hover:not(:disabled) { box-shadow:0 4px 12px rgba(22,163,74,.35); }
+
+.btn-danger  { background:linear-gradient(135deg,#dc2626,#ef4444); color:#fff; }
+.btn-danger:hover:not(:disabled)  { box-shadow:0 4px 12px rgba(220,38,38,.35); }
+
+.btn-accent  { background:linear-gradient(135deg,#c5a028,#e2b93b); color:#fff; }
+
+.btn-outline { background:#fff; color:#475569; border:1px solid #e2e8f0; }
+.btn-outline:hover:not(:disabled) { background:#f8fafc; border-color:#cbd5e1; }
+
+.btn-ghost { background:transparent; color:#64748b; }
+.btn-ghost:hover:not(:disabled) { background:#f1f5f9; color:#0f172a; }
+
+.btn-sm { padding:5px 10px; font-size:.75rem; border-radius:6px; }
+.btn-lg { padding:10px 20px; font-size:.9rem; border-radius:10px; }
+
+/* ══════ FORM INPUTS ══════ */
+.erp-input  { width:100%; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; font-size:.875rem; color:#1e293b; background:#fff; outline:none; transition:border-color 150ms,box-shadow 150ms; }
+.erp-input:focus { border-color:#1b3a6b; box-shadow:0 0 0 3px rgba(27,58,107,.1); }
+.erp-input::placeholder { color:#94a3b8; }
+.erp-label  { display:block; font-size:.75rem; font-weight:600; color:#475569; margin-bottom:5px; letter-spacing:.02em; }
+
+/* ══════ FINANCIAL STATEMENTS ══════ */
+.stmt-section-title { font-size:.73rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#0f2744; background:#f0f4ff; padding:8px 16px; border-right:3px solid #1b3a6b; }
+.stmt-row       { display:flex; align-items:center; padding:8px 16px; border-bottom:1px solid #f8fafc; }
+.stmt-row:hover { background:#fafbff; }
+.stmt-total     { display:flex; align-items:center; padding:10px 16px; background:#f8fafc; border-top:2px solid #e2e8f0; font-weight:700; }
+.stmt-grand-total { display:flex; align-items:center; padding:12px 16px; background:linear-gradient(135deg,#0f2744,#1b3a6b); color:white; font-weight:800; border-radius:0 0 10px 10px; }
+
+/* ══════ PAGE ANIMATION ══════ */
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.page-enter { animation:fadeIn .25s ease-out both; }
+
+/* ══════ IFRS STANDARD TAG ══════ */
+.itag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+@media print { .no-print{display:none!important} body{background:white} }
