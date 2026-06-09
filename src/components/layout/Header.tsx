@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, Home, ChevronLeft } from 'lucide-react'
 import type { Profile } from '@/types'
 
 interface HeaderProps {
@@ -9,41 +9,83 @@ interface HeaderProps {
 }
 
 export default function Header({ profile, pageName }: HeaderProps) {
-  const now = new Date()
-  const dateAr = now.toLocaleDateString('ar-SA', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  })
+  const name = profile?.full_name_ar ?? profile?.full_name ?? 'مستخدم'
+  const initial = name[0] ?? '؟'
 
   return (
-    <header className="sticky top-0 z-40 h-16 bg-white border-b border-gray-100 flex items-center
-                       justify-between px-6 shadow-sm">
-      {/* Page title */}
-      <div>
-        <h1 className="text-gray-800 font-bold text-lg leading-tight">{pageName}</h1>
-        <p className="text-gray-400 text-xs">{dateAr}</p>
+    <header style={{
+      height: '64px', background: '#fff', borderBottom: '1px solid #E4E6EF',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 28px', position: 'sticky', top: 0, zIndex: 40,
+      boxShadow: '0 1px 0 #E4E6EF',
+    }}>
+
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Home size={15} color="#A1A5B7" />
+        <ChevronLeft size={14} color="#D1D5DB" />
+        <span style={{ fontSize: '14px', fontWeight: 600, color: '#181C32' }}>{pageName}</span>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-3">
-        {/* Search */}
-        <div className="hidden sm:flex items-center gap-2 bg-gray-50 border border-gray-200
-                        rounded-xl px-3 py-2 text-sm text-gray-400 w-48 cursor-text">
-          <Search className="w-4 h-4 flex-shrink-0" />
-          <span>بحث...</span>
-        </div>
+      {/* Right actions */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
-        {/* Notifications */}
-        <button className="relative w-9 h-9 flex items-center justify-center rounded-xl
-                           bg-gray-50 border border-gray-200 text-gray-500 hover:bg-gray-100">
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
+        {/* Search */}
+        <button style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          height: '38px', padding: '0 14px',
+          background: '#F5F8FA', border: '1px solid #E4E6EF',
+          borderRadius: '10px', cursor: 'pointer', color: '#A1A5B7', fontSize: '13px',
+          transition: 'all 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#1b3a6b'}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E4E6EF'}>
+          <Search size={14} />
+          <span>بحث سريع...</span>
+          <kbd style={{
+            fontSize: '11px', background: '#E4E6EF', color: '#7E8299',
+            padding: '2px 6px', borderRadius: '5px', fontFamily: 'monospace',
+          }}>⌘K</kbd>
         </button>
 
-        {/* Avatar */}
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white
-                        text-sm flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #1b3a6b, #2a5298)' }}>
-          {(profile?.full_name_ar ?? profile?.full_name ?? '؟')[0]}
+        {/* Notifications */}
+        <button style={{
+          position: 'relative', width: '38px', height: '38px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: '#F5F8FA', border: '1px solid #E4E6EF',
+          borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#1b3a6b'}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E4E6EF'}>
+          <Bell size={16} color="#5E6278" />
+          <span style={{
+            position: 'absolute', top: '8px', right: '9px',
+            width: '7px', height: '7px', borderRadius: '50%',
+            background: '#F1416C', border: '1.5px solid #fff',
+          }} />
+        </button>
+
+        {/* Divider */}
+        <div style={{ width: '1px', height: '24px', background: '#E4E6EF', margin: '0 4px' }} />
+
+        {/* User chip */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          height: '38px', padding: '0 12px',
+          background: '#F5F8FA', border: '1px solid #E4E6EF',
+          borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#1b3a6b'}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E4E6EF'}>
+          <div style={{
+            width: '26px', height: '26px', borderRadius: '8px',
+            background: 'linear-gradient(135deg,#1b3a6b,#2a5298)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontSize: '12px', fontWeight: 700, flexShrink: 0,
+          }}>
+            {initial}
+          </div>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#3F4254' }}>{name}</span>
         </div>
       </div>
     </header>
