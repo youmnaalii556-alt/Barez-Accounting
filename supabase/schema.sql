@@ -364,6 +364,53 @@ INSERT INTO public.acc_accounts (code, name, type, standard, normal_balance) VAL
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================
+-- Company Settings
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.company_settings (
+  id            INTEGER PRIMARY KEY DEFAULT 1,
+  name          TEXT NOT NULL DEFAULT 'Barez Company',
+  name_ar       TEXT NOT NULL DEFAULT 'شركة بارز',
+  logo_url      TEXT,
+  currency      TEXT NOT NULL DEFAULT 'EGP',
+  currency_ar   TEXT NOT NULL DEFAULT 'ج.م',
+  tax_no        TEXT,
+  reg_no        TEXT,
+  address       TEXT,
+  phone         TEXT,
+  email         TEXT,
+  website       TEXT,
+  founded_year  INTEGER,
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT single_row CHECK (id = 1)
+);
+
+ALTER TABLE public.company_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "auth_read_company"  ON public.company_settings;
+DROP POLICY IF EXISTS "admin_write_company" ON public.company_settings;
+CREATE POLICY "auth_read_company"   ON public.company_settings FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "admin_write_company" ON public.company_settings FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'super_admin'));
+
+INSERT INTO public.company_settings (id, name, name_ar, currency, currency_ar, address, phone, founded_year)
+VALUES (1, 'Barez Company', 'شركة بارز للاستثمار العقاري', 'EGP', 'ج.م',
+        'القاهرة، جمهورية مصر العربية', '+20-10-0000-0000', 2018)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Hotel Apartment Projects (5 units + consolidated)
+-- ============================================================
+INSERT INTO public.projects
+  (project_no, name, name_ar, type, status, budget, start_date, description)
+VALUES
+  ('PRJ-001', 'Barez Heights Unit A',  'برج بارز — الوحدة أ',  'real_estate', 'active', 2500000, '2023-01-01', 'شقة فندقية — الطابق الثالث'),
+  ('PRJ-002', 'Barez Heights Unit B',  'برج بارز — الوحدة ب',  'real_estate', 'active', 2500000, '2023-01-01', 'شقة فندقية — الطابق الثالث'),
+  ('PRJ-003', 'Barez Heights Unit C',  'برج بارز — الوحدة ج',  'real_estate', 'active', 3200000, '2023-03-01', 'شقة فندقية — الطابق الخامس'),
+  ('PRJ-004', 'Barez Heights Unit D',  'برج بارز — الوحدة د',  'real_estate', 'active', 3200000, '2023-03-01', 'شقة فندقية — الطابق الخامس'),
+  ('PRJ-005', 'Barez Heights Unit E',  'برج بارز — الوحدة هـ', 'real_estate', 'active', 4800000, '2023-06-01', 'بنتهاوس — الطابق العاشر'),
+  ('PRJ-006', 'Barez Consolidated',    'المحفظة المجمعة',       'other',       'active', 16200000,'2023-01-01', 'القوائم المالية المجمعة لجميع وحدات شركة بارز')
+ON CONFLICT (project_no) DO NOTHING;
+
+-- ============================================================
 -- After running this SQL:
 -- 1. Go to Supabase Auth → Users, create your first user
 -- 2. Promote to Super Admin (replace UUID):

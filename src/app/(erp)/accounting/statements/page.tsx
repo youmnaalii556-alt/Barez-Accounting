@@ -2,44 +2,62 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/layout/Header'
-import { getProjects, getAccounts, getJournals } from '@/lib/accounting/data'
-import { profitLoss, balanceSheet, cashFlow, fmt } from '@/lib/accounting/engine'
+import { getProjects, getAccounts, getJournals, getCompany } from '@/lib/accounting/data'
+import { profitLoss, balanceSheet, cashFlow, filterJournals, fmt } from '@/lib/accounting/engine'
 import { TrendingUp, Building2, Coins } from 'lucide-react'
+import StatementControls, { MONTHS } from './StatementControls'
 import type { Profile } from '@/types'
+import type { CompanySettings, Project } from '@/types/accounting'
 
 export const dynamic = 'force-dynamic'
 
 type Tab = 'pl' | 'bs' | 'cf'
+type Mode = 'monthly' | 'annual'
 
 export default async function StatementsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; tab?: Tab }>
+  searchParams: Promise<{ project?: string; tab?: Tab; mode?: Mode; month?: string; year?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
-  const { project: projectId = 'all', tab = 'pl' } = await searchParams
-  const [projects, accounts, journals] = await Promise.all([
-    getProjects(), getAccounts(), getJournals(projectId),
+  const sp = await searchParams
+  const project = sp.project ?? 'all'
+  const tab: Tab = sp.tab ?? 'pl'
+  const mode: Mode = sp.mode ?? 'monthly'
+  const month = sp.month ?? String(new Date().getMonth() + 1).padStart(2, '0')
+  const year  = sp.year ?? String(new Date().getFullYear())
+
+  const [projects, accounts, allJournals, company] = await Promise.all([
+    getProjects(), getAccounts(), getJournals(project), getCompany(),
   ])
+
+  // period filter
+  const journals = filterJournals(allJournals, { month: mode === 'monthly' ? month : null, year })
 
   const pl = profitLoss(journals, accounts)
   const bs = balanceSheet(journals, accounts)
   const cf = cashFlow(journals, accounts)
 
-  const projName = projectId === 'all'
-    ? 'Barez Company (مجمّعة)'
-    : projects.find(p => p.id === projectId)?.name_ar ?? '—'
+  const proj = project === 'all' ? null : projects.find(p => p.id === project)
+  const titleName = proj ? proj.name_ar : company.name_ar
+  const periodLabel = mode === 'annual'
+    ? `السنة المالية ${year}`
+    : `${MONTHS[parseInt(month) - 1]} ${year}`
+  const cur = company.currency_ar
 
-  const q = (t: Tab) => `?tab=${t}${projectId !== 'all' ? `&project=${projectId}` : ''}`
+  const q = (t: Tab) => {
+    const p = new URLSearchParams({ tab: t, project, mode, month, year })
+    return `?${p.toString()}`
+  }
 
   const TABS: { id: Tab; label: string; std: string; icon: typeof TrendingUp }[] = [
-    { id: 'pl', label: 'قائمة الدخل',       std: 'IAS 1', icon: TrendingUp },
-    { id: 'bs', label: 'المركز المالي',      std: 'IAS 1', icon: Building2  },
-    { id: 'cf', label: 'التدفقات النقدية',   std: 'IAS 7', icon: Coins      },
+    { id: 'pl', label: 'قائمة الدخل',      std: 'IAS 1', icon: TrendingUp },
+    { id: 'bs', label: 'المركز المالي',     std: 'IAS 1', icon: Building2  },
+    { id: 'cf', label: 'التدفقات النقدية',  std: 'IAS 7', icon: Coins      },
   ]
 
   return (
@@ -47,18 +65,10 @@ export default async function StatementsPage({
       <Header profile={profile as Profile | null} />
       <main className="flex-1 p-6 space-y-5 page-enter">
 
-        {/* Project filter */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/accounting/statements?tab=${tab}`}
-            className={`btn btn-sm ${projectId === 'all' ? 'btn-primary' : 'btn-outline'}`}>كل المشاريع</Link>
-          {projects.map(p => (
-            <Link key={p.id} href={`/accounting/statements?tab=${tab}&project=${p.id}`}
-              className={`btn btn-sm ${projectId === p.id ? 'btn-primary' : 'btn-outline'}`}>{p.name_ar}</Link>
-          ))}
-        </div>
+        <StatementControls projects={projects as Project[]} project={project} mode={mode} month={month} year={year} tab={tab} />
 
         {/* Statement tabs */}
-        <div className="flex gap-2 bg-white rounded-xl p-1.5 border border-gray-100 shadow-sm w-fit">
+        <div className="flex gap-2 bg-white rounded-xl p-1.5 border border-gray-100 shadow-sm w-fit no-print">
           {TABS.map(t => (
             <Link key={t.id} href={q(t.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
@@ -71,12 +81,12 @@ export default async function StatementsPage({
         {/* ── Income Statement ── */}
         {tab === 'pl' && (
           <div className="erp-card max-w-2xl mx-auto">
-            <FSHeader title="قائمة الدخل الشامل" subtitle={`${projName} · IAS 1`} />
+            <FSHeader company={company} title={titleName} statement="قائمة الدخل الشامل" period={periodLabel} std="IAS 1" consolidated={project === 'all'} />
             <div className="erp-card-body">
               <table className="erp-table">
                 <tbody>
                   <tr className="bg-gray-50"><td colSpan={2} className="font-black text-gray-700">الإيرادات</td></tr>
-                  {pl.revenue.length === 0 && <tr><td colSpan={2} className="text-center text-gray-400 text-sm py-2">لا توجد إيرادات</td></tr>}
+                  {pl.revenue.length === 0 && <tr><td colSpan={2} className="text-center text-gray-400 text-sm py-2">لا توجد إيرادات مسجّلة</td></tr>}
                   {pl.revenue.map(r => (
                     <tr key={r.code}><td className="text-gray-700 text-sm">{r.name}</td>
                       <td className="col-num text-credit font-bold text-sm">{fmt(r.amount)}</td></tr>
@@ -85,7 +95,7 @@ export default async function StatementsPage({
                     <td className="col-num font-black text-credit">{fmt(pl.totalRevenue)}</td></tr>
 
                   <tr className="bg-gray-50"><td colSpan={2} className="font-black text-gray-700">المصروفات</td></tr>
-                  {pl.expenses.length === 0 && <tr><td colSpan={2} className="text-center text-gray-400 text-sm py-2">لا توجد مصروفات</td></tr>}
+                  {pl.expenses.length === 0 && <tr><td colSpan={2} className="text-center text-gray-400 text-sm py-2">لا توجد مصروفات مسجّلة</td></tr>}
                   {pl.expenses.map(e => (
                     <tr key={e.code}><td className="text-gray-700 text-sm">{e.name}</td>
                       <td className="col-num text-debit font-bold text-sm">({fmt(e.amount)})</td></tr>
@@ -100,6 +110,7 @@ export default async function StatementsPage({
                   </tr>
                 </tfoot>
               </table>
+              <FSFooter cur={cur} period={periodLabel} />
             </div>
           </div>
         )}
@@ -107,7 +118,7 @@ export default async function StatementsPage({
         {/* ── Balance Sheet ── */}
         {tab === 'bs' && (
           <div className="erp-card">
-            <FSHeader title="قائمة المركز المالي" subtitle={`${projName} · IAS 1`} />
+            <FSHeader company={company} title={titleName} statement="قائمة المركز المالي" period={periodLabel} std="IAS 1" consolidated={project === 'all'} />
             <div className="erp-card-body grid grid-cols-1 md:grid-cols-2 gap-5">
               <table className="erp-table">
                 <thead><tr><th colSpan={2}>الأصول</th></tr></thead>
@@ -151,7 +162,7 @@ export default async function StatementsPage({
         {/* ── Cash Flow ── */}
         {tab === 'cf' && (
           <div className="erp-card max-w-2xl mx-auto">
-            <FSHeader title="قائمة التدفقات النقدية" subtitle={`${projName} · الطريقة المباشرة · IAS 7`} />
+            <FSHeader company={company} title={titleName} statement="قائمة التدفقات النقدية" period={periodLabel} std="IAS 7 · الطريقة المباشرة" consolidated={project === 'all'} />
             <div className="erp-card-body">
               <table className="erp-table">
                 <tbody>
@@ -172,6 +183,7 @@ export default async function StatementsPage({
                   <td className="col-num font-black" style={{ color: '#c5a028' }}>{fmt(cf.netChange)}</td>
                 </tr></tfoot>
               </table>
+              <FSFooter cur={cur} period={periodLabel} />
             </div>
           </div>
         )}
@@ -180,14 +192,37 @@ export default async function StatementsPage({
   )
 }
 
-function FSHeader({ title, subtitle }: { title: string; subtitle: string }) {
+function FSHeader({ company, title, statement, period, std, consolidated }: {
+  company: CompanySettings; title: string; statement: string; period: string; std: string; consolidated: boolean
+}) {
   return (
-    <div className="text-center py-5 border-b-2 border-gray-800">
-      <h2 className="text-lg font-black text-gray-800">{title}</h2>
-      <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
-      <p className="text-[11px] text-gray-400 mt-0.5">
-        {new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
-      </p>
+    <div className="text-center py-5 border-b-2 border-gray-800 relative">
+      {/* Logo */}
+      <div className="flex items-center justify-center gap-3 mb-3">
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0"
+          style={{ background: company.logo_url ? '#fff' : 'linear-gradient(135deg,#c5a028,#e2b93b)' }}>
+          {company.logo_url
+            ? <img src={company.logo_url} alt="logo" className="w-full h-full object-cover" />
+            : <span className="text-white font-black text-xl">B</span>}
+        </div>
+        <div className="text-right">
+          <p className="font-black text-gray-800 text-base leading-tight">{title}</p>
+          {consolidated && <p className="text-[10px] text-gray-400">قوائم مجمّعة — جميع المشاريع</p>}
+        </div>
+      </div>
+      <h2 className="text-lg font-black text-gray-800">{statement}</h2>
+      <p className="text-xs text-gray-500 mt-1">للفترة: {period} <span className="itag mr-1">{std}</span></p>
+    </div>
+  )
+}
+
+function FSFooter({ cur, period }: { cur: string; period: string }) {
+  return (
+    <div className="flex items-center justify-between text-[11px] text-gray-400 border-t border-gray-100 mt-3 pt-3 px-1">
+      <span>المبالغ بالـ {cur}</span>
+      <span>المحاسب: ____________</span>
+      <span>المدير المالي: ____________</span>
+      <span>{period}</span>
     </div>
   )
 }
