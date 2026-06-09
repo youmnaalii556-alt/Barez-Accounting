@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, LogOut, ChevronDown, ChevronLeft,
+  LayoutDashboard, LogOut, ChevronDown, ChevronLeft, ChevronRight,
   ClipboardList, Scale, FileText, BarChart3, List, Settings,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -61,8 +61,8 @@ export default function Sidebar({ modules, profile }: SidebarProps) {
         borderLeft: '1px solid rgba(255,255,255,.05)',
       }}>
 
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 flex-shrink-0"
+      {/* Logo → back to launcher */}
+      <Link href="/home" className="flex items-center gap-3 px-5 py-5 flex-shrink-0 hover:bg-white/5 transition-colors"
         style={{ borderBottom: '1px solid rgba(255,255,255,.07)' }}>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
           style={{ background: 'linear-gradient(135deg,#c5a028,#e2b93b)' }}>
@@ -72,7 +72,15 @@ export default function Sidebar({ modules, profile }: SidebarProps) {
           <p className="font-black text-white text-base leading-none">Barez ERP</p>
           <p className="text-xs mt-0.5" style={{ color: '#7a9cc8' }}>إدارة الموارد المؤسسية</p>
         </div>
-      </div>
+      </Link>
+
+      {/* Back to departments */}
+      <Link href="/home"
+        className="flex items-center gap-2 mx-2.5 mt-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+        style={{ background: 'rgba(197,160,40,.1)', color: '#e2b93b' }}>
+        <ChevronRight className="w-4 h-4" />
+        <span>كل الأقسام</span>
+      </Link>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2.5 sidebar-scroll space-y-0.5">

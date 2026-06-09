@@ -43,6 +43,18 @@ export interface Journal {
   lines?: JournalLine[]
 }
 
+export interface CompanySettings {
+  id: number
+  name: string
+  name_ar: string
+  logo_url: string | null
+  currency: string
+  currency_ar: string
+  tax_no: string | null
+  reg_no: string | null
+  address: string | null
+}
+
 export interface Project {
   id: string
   project_no: string

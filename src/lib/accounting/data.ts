@@ -3,7 +3,20 @@
  * Reads accounts / journal_entries / journal_lines / projects from Supabase.
  */
 import { createClient } from '@/lib/supabase/server'
-import type { Account, Journal, JournalLine, Project } from '@/types/accounting'
+import type { Account, Journal, JournalLine, Project, CompanySettings } from '@/types/accounting'
+
+const DEFAULT_COMPANY: CompanySettings = {
+  id: 1, name: 'Barez Company', name_ar: 'شركة بارز',
+  logo_url: null, currency: 'EGP', currency_ar: 'ج.م',
+  tax_no: null, reg_no: null, address: null,
+}
+
+/** Company identity for statement headers; falls back to defaults if unset. */
+export async function getCompany(): Promise<CompanySettings> {
+  const supabase = await createClient()
+  const { data } = await supabase.from('company_settings').select('*').eq('id', 1).maybeSingle()
+  return (data as CompanySettings) ?? DEFAULT_COMPANY
+}
 
 export async function getProjects(): Promise<Project[]> {
   const supabase = await createClient()

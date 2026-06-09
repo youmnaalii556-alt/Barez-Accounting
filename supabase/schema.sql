@@ -185,6 +185,8 @@ ALTER TABLE public.clients         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tickets         ENABLE ROW LEVEL SECURITY;
 
 -- profiles
+DROP POLICY IF EXISTS "users_read_own_profile"  ON public.profiles;
+DROP POLICY IF EXISTS "superadmin_all_profiles" ON public.profiles;
 CREATE POLICY "users_read_own_profile" ON public.profiles
   FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "superadmin_all_profiles" ON public.profiles
@@ -193,6 +195,8 @@ CREATE POLICY "superadmin_all_profiles" ON public.profiles
   );
 
 -- modules
+DROP POLICY IF EXISTS "authenticated_read_modules" ON public.modules;
+DROP POLICY IF EXISTS "superadmin_write_modules"   ON public.modules;
 CREATE POLICY "authenticated_read_modules" ON public.modules
   FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "superadmin_write_modules" ON public.modules
@@ -200,40 +204,66 @@ CREATE POLICY "superadmin_write_modules" ON public.modules
     EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'super_admin')
   );
 
--- All other tables: authenticated users can read; admins/managers can write
-CREATE POLICY "auth_read_acc_proj"   ON public.acc_projects    FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_acc_proj"  ON public.acc_projects    FOR ALL USING (
+-- acc_projects
+DROP POLICY IF EXISTS "auth_read_acc_proj"  ON public.acc_projects;
+DROP POLICY IF EXISTS "auth_write_acc_proj" ON public.acc_projects;
+CREATE POLICY "auth_read_acc_proj"  ON public.acc_projects FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_acc_proj" ON public.acc_projects FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('super_admin','manager')));
 
-CREATE POLICY "auth_read_accounts"   ON public.acc_accounts    FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_accounts"  ON public.acc_accounts    FOR ALL USING (
+-- acc_accounts
+DROP POLICY IF EXISTS "auth_read_accounts"  ON public.acc_accounts;
+DROP POLICY IF EXISTS "auth_write_accounts" ON public.acc_accounts;
+CREATE POLICY "auth_read_accounts"  ON public.acc_accounts FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_accounts" ON public.acc_accounts FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('super_admin','manager')));
 
-CREATE POLICY "auth_read_journal"    ON public.acc_journals    FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_journal"   ON public.acc_journals    FOR ALL USING (
+-- acc_journals
+DROP POLICY IF EXISTS "auth_read_journal"  ON public.acc_journals;
+DROP POLICY IF EXISTS "auth_write_journal" ON public.acc_journals;
+CREATE POLICY "auth_read_journal"  ON public.acc_journals FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_journal" ON public.acc_journals FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('super_admin','manager')));
 
-CREATE POLICY "auth_read_jlines"     ON public.acc_journal_lines FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_jlines"    ON public.acc_journal_lines FOR ALL USING (
+-- acc_journal_lines
+DROP POLICY IF EXISTS "auth_read_jlines"  ON public.acc_journal_lines;
+DROP POLICY IF EXISTS "auth_write_jlines" ON public.acc_journal_lines;
+CREATE POLICY "auth_read_jlines"  ON public.acc_journal_lines FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_jlines" ON public.acc_journal_lines FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('super_admin','manager')));
 
-CREATE POLICY "auth_read_projects"   ON public.projects        FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_projects"  ON public.projects        FOR ALL USING (
+-- projects
+DROP POLICY IF EXISTS "auth_read_projects"  ON public.projects;
+DROP POLICY IF EXISTS "auth_write_projects" ON public.projects;
+CREATE POLICY "auth_read_projects"  ON public.projects FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_projects" ON public.projects FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('super_admin','manager')));
 
-CREATE POLICY "auth_read_employees"  ON public.employees       FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_employees" ON public.employees       FOR ALL USING (
+-- employees
+DROP POLICY IF EXISTS "auth_read_employees"  ON public.employees;
+DROP POLICY IF EXISTS "auth_write_employees" ON public.employees;
+CREATE POLICY "auth_read_employees"  ON public.employees FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_employees" ON public.employees FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('super_admin','manager')));
 
-CREATE POLICY "auth_read_leaves"     ON public.leave_requests  FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_leaves"    ON public.leave_requests  FOR ALL USING (auth.uid() IS NOT NULL);
+-- leave_requests
+DROP POLICY IF EXISTS "auth_read_leaves"  ON public.leave_requests;
+DROP POLICY IF EXISTS "auth_write_leaves" ON public.leave_requests;
+CREATE POLICY "auth_read_leaves"  ON public.leave_requests FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_leaves" ON public.leave_requests FOR ALL USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "auth_read_clients"    ON public.clients         FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_clients"   ON public.clients         FOR ALL USING (
+-- clients
+DROP POLICY IF EXISTS "auth_read_clients"  ON public.clients;
+DROP POLICY IF EXISTS "auth_write_clients" ON public.clients;
+CREATE POLICY "auth_read_clients"  ON public.clients FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_clients" ON public.clients FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('super_admin','manager')));
 
-CREATE POLICY "auth_read_tickets"    ON public.tickets         FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "auth_write_tickets"   ON public.tickets         FOR ALL USING (auth.uid() IS NOT NULL);
+-- tickets
+DROP POLICY IF EXISTS "auth_read_tickets"  ON public.tickets;
+DROP POLICY IF EXISTS "auth_write_tickets" ON public.tickets;
+CREATE POLICY "auth_read_tickets"  ON public.tickets FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "auth_write_tickets" ON public.tickets FOR ALL USING (auth.uid() IS NOT NULL);
 
 -- ============================================================
 -- Trigger: auto-create profile on signup
@@ -265,7 +295,7 @@ $$;
 
 DO $$ DECLARE t TEXT;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['profiles','modules','journal_entries','projects','employees','clients','tickets']
+  FOREACH t IN ARRAY ARRAY['profiles','modules','acc_journals','projects','employees','clients','tickets']
   LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS trg_updated_at ON public.%I', t);
     EXECUTE format('CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.%I FOR EACH ROW EXECUTE FUNCTION public.set_updated_at()', t);
